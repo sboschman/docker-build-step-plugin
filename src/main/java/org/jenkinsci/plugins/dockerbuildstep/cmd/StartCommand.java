@@ -4,10 +4,12 @@ import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.util.FormValidation;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.jenkinsci.plugins.dockerbuildstep.DockerLogAction;
 import org.jenkinsci.plugins.dockerbuildstep.action.EnvInvisibleAction;
 import org.jenkinsci.plugins.dockerbuildstep.log.ConsoleLogger;
 import org.jenkinsci.plugins.dockerbuildstep.util.BindParser;
@@ -96,10 +98,17 @@ public class StartCommand extends DockerCommand {
         Links linksRes = LinkUtils.parseLinks(Resolver.buildVar(build, links));
         Bind[] bindsRes = BindParser.parse(Resolver.buildVar(build, bindMounts));
         DockerClient client = getClient();
-
+        
         // TODO check, if container exists and is stopped (probably catch exception)
         for (String id : ids) {
             id = id.trim();
+            
+            try {
+				build.addAction(new DockerLogAction(build, id).start());
+			} catch (IOException e) {
+				throw new DockerException("Unable to start log for container id " + id, 0, e);
+			}
+            
             client.startContainerCmd(id)
                     .withPublishAllPorts(publishAllPorts)
                     .withPortBindings(portBindingsRes)
