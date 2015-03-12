@@ -6,7 +6,7 @@ import hudson.model.AbstractBuild;
 import java.io.IOException;
 import java.util.List;
 
-import org.jenkinsci.plugins.dockerbuildstep.action.DockerContainerOutputAction;
+import org.jenkinsci.plugins.dockerbuildstep.action.DockerContainerConsoleAction;
 import org.jenkinsci.plugins.dockerbuildstep.action.EnvInvisibleAction;
 import org.jenkinsci.plugins.dockerbuildstep.log.ConsoleLogger;
 import org.jenkinsci.plugins.dockerbuildstep.util.Resolver;

@@ -34,14 +34,16 @@ import com.jcraft.jzlib.GZIPInputStream;
  * Jenkins action to add a 'Console Output' like page for the Docker container output. 
  * Container output is gathered using the {@link AttachContainerCmd}.
  */
-public class DockerContainerOutputAction extends TaskAction implements Serializable {
+public class DockerContainerConsoleAction extends TaskAction implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private final AbstractBuild<?, ?> build;
 
 	private final String containerId;
+	
+	private String containerName;
 
-	public DockerContainerOutputAction(AbstractBuild<?, ?> build, String containerId) {
+	public DockerContainerConsoleAction(AbstractBuild<?, ?> build, String containerId) {
 		super();
 		this.build = build;
 		this.containerId = containerId;
@@ -52,7 +54,14 @@ public class DockerContainerOutputAction extends TaskAction implements Serializa
 	}
 
 	public String getDisplayName() {
-		return "Docker Container Output";
+		if (containerName != null && !isSingleContainerBuild()) {
+			return (containerName.startsWith("/") ? containerName.substring(1) : containerName) + " Output";
+		}		
+		return "Container Output";
+	}
+	
+	private boolean isSingleContainerBuild(){
+		return build.getActions(DockerContainerConsoleAction.class).size() == 1;
 	}
 
 	public String getFullDisplayName() {
@@ -60,7 +69,7 @@ public class DockerContainerOutputAction extends TaskAction implements Serializa
 	}
 
 	public String getUrlName() {
-		return "dockerconsole";
+		return "dockerconsole_" + containerId;
 	}
 
 	public AbstractBuild<?, ?> getOwner() {
@@ -80,9 +89,13 @@ public class DockerContainerOutputAction extends TaskAction implements Serializa
 	public String getBuildStatusUrl() {
 		return build.getIconColor().getImage();
 	}
+	
+	public void setContainerName(String containerName) {
+		this.containerName = containerName;
+	}
 
 	public File getLogFile() {
-		return new File(build.getRootDir(), "docker.log");
+		return new File(build.getRootDir(), "docker_" + containerId + ".log");
 	}
 
 	@Override
@@ -128,7 +141,7 @@ public class DockerContainerOutputAction extends TaskAction implements Serializa
 		}
 	}
 	
-	public DockerContainerOutputAction start() throws IOException {
+	public DockerContainerConsoleAction start() throws IOException {
 		workerThread = new DockerLogWorkerThread(getLogFile());
 		workerThread.start();
 		return this;
@@ -142,8 +155,8 @@ public class DockerContainerOutputAction extends TaskAction implements Serializa
 	public final class DockerLogWorkerThread extends TaskThread {
 
 		protected DockerLogWorkerThread(File logFile) throws IOException {
-			super(DockerContainerOutputAction.this, ListenerAndText.forFile(logFile,
-					DockerContainerOutputAction.this));
+			super(DockerContainerConsoleAction.this, ListenerAndText.forFile(logFile,
+					DockerContainerConsoleAction.this));
 		}
 
 		@Override
@@ -172,6 +185,7 @@ public class DockerContainerOutputAction extends TaskAction implements Serializa
 					reader.close();
 				}
 			}
+			workerThread = null;
 		}
 
 		private void process(DockerLogStreamReader ls, OutputStreamWriter w)
