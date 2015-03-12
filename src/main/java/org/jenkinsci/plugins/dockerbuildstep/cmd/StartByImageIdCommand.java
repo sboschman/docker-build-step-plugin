@@ -3,8 +3,10 @@ package org.jenkinsci.plugins.dockerbuildstep.cmd;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 
+import java.io.IOException;
 import java.util.List;
 
+import org.jenkinsci.plugins.dockerbuildstep.action.DockerContainerOutputAction;
 import org.jenkinsci.plugins.dockerbuildstep.action.EnvInvisibleAction;
 import org.jenkinsci.plugins.dockerbuildstep.log.ConsoleLogger;
 import org.jenkinsci.plugins.dockerbuildstep.util.Resolver;
@@ -48,6 +50,8 @@ public class StartByImageIdCommand extends DockerCommand {
         List<Container> containers = client.listContainersCmd().withShowAll(true).exec();
         for (Container c : containers) {
             if (imageIdRes.equalsIgnoreCase(c.getImage())) {
+            	attachContainerOutput(build, c.getId());
+            	
                 client.startContainerCmd(c.getId());
                 console.logInfo("started container id " + c.getId());
 
