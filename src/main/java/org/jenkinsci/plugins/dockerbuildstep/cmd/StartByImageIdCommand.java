@@ -12,8 +12,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.DockerException;
-import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.command.InspectContainerResponse;
 
 /**
  * This command starts all containers create from specified image ID. It also exports some build environment variable
